@@ -1,0 +1,96 @@
+"""Main agent orchestration logic"""
+
+from .gemini_client import GeminiComputerUseClient
+from .browser import BrowserManager
+from .utils import get_safety_confirmation
+from .logger import get_logger
+
+logger = get_logger(__name__)
+
+class ComputerUseAgent:
+    """Class for orchestrating the computer use agent"""
+
+    def __init__(self,
+                 llm_client: GeminiComputerUseClient,
+                 browser_manager: BrowserManager,
+                 max_turns: int = 20):
+        self.llm = llm_client
+        self.browser = browser_manager
+        self.max_turns = max_turns
+
+    def _execute_function_calls(self, function_calls):
+        """Executes the function calls using browser actions"""
+        results = []
+        for fc in function_calls:
+            fc_name = fc.name
+            fc_args = dict(fc.args or {})
+            action_result = {}
+
+            if "safety_decision" in fc_args:
+                decision = get_safety_confirmation(fc_args["safety_decision"])
+                if decision == "TERMINATE":
+                    logger.warning("Terminating agent loop by user request.")
+                    break
+                action_result["safety_acknowledgement"] = "true"
+        
+            result = self.browser.execute_action(fc_name, fc_args)
+            action_result.update(result)
+            results.append((fc_name, action_result))
+        return results
+
+    def run(self, goal: str, initial_url: str):
+        """Runs the main agent loop"""
+        try:
+            self.browser.start()
+            self.browser.goto(initial_url)
+
+            logger.info(f"Agent goal: {goal}")
+
+            # Capture initial state
+            initial_image = self.browser.capture_screen()
+            contents = self.llm.build_initial_message(goal, initial_image)
+            
+            # TODO: Add total execution time.
+            # Run the react loop for max_turns
+            for turn in range(self.max_turns):
+                logger.info(f"===== Turn {turn + 1}/{self.max_turns} =====")
+                
+                # Generate content
+                response = self.llm.generate_content(contents)
+                
+                candidate = response.candidates[0]
+                contents.append(candidate.content)
+
+                function_calls = [
+                    p.function_call
+                    for p in candidate.content.parts
+                    if getattr(p, "function_call", None)
+                ]
+
+                # If no function calls, then task complete
+                if not function_calls:
+                    final_text = " ".join(
+                        [p.text for p in candidate.content.parts if p.text]
+                    )
+                    logger.info(f"Final Output: {final_text}")
+                    break
+                
+                # Execute actions and send back screenshots
+                action_results = self._execute_function_calls(function_calls)
+                screenshot = self.browser.capture_screen()
+                current_url = self.browser.get_current_url()
+
+                function_response_content = self.llm.build_function_responses_message(
+                    screenshot=screenshot,
+                    current_url=current_url,
+                    results=action_results
+                )
+
+                # Update state with function responses
+                contents.append(function_response_content)
+
+        except Exception as e:
+            logger.error(f"Agent encountered an error: {e}", exc_info=True)
+            raise
+        finally:
+            self.browser.close()
