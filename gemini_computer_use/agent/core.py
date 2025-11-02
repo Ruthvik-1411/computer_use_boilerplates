@@ -41,6 +41,7 @@ class ComputerUseAgent:
 
     def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
+        final_response = ""
         try:
             self.browser.start()
             if initial_url:
@@ -75,10 +76,10 @@ class ComputerUseAgent:
 
                 # If no function calls, then task complete
                 if not function_calls:
-                    final_text = " ".join(
+                    final_response = " ".join(
                         [p.text for p in candidate.content.parts if p.text]
                     )
-                    logger.info(f"Final Output: {final_text}")
+                    logger.info(f"Final Output: {final_response}")
                     break
                 
                 # Execute actions and send back screenshots
@@ -94,9 +95,15 @@ class ComputerUseAgent:
 
                 # Update state with function responses
                 contents.append(function_response_content)
+            else:
+                # Reached max_turns without reaching a final output
+                logger.warning("Exhausted maximum number of turns. Unable to achieve goal.")
+                final_response = "Goal not completed within the maximum turn limit."
 
         except Exception as e:
             logger.error(f"Agent encountered an error: {e}", exc_info=True)
-            raise
+            final_response = f"Agent terminated due to error: {e}"
         finally:
             self.browser.close()
+        
+        return final_response
