@@ -74,7 +74,14 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-### CLI Usage Examples
+### CLI Usage
+
+The agent can be run using the cli using:
+```bash
+python main.py "Goal"
+# or
+python main.py "Goal" --url "initial_url"
+```
 
 #### Example 1: Reading data from a webpage
 
@@ -91,9 +98,24 @@ Use the Computer Use agent to fill and submit online forms.
 Make sure the `INITIAL_URL` in `config.py` points to your form (e.g., a Google Form).
 
 ```bash
-python main.py "Fill in the opt-out form for marketing mails. Name is Ruths, email is ruths@email.com, I'm receiving too many emails, but I still want to receive security updates and confirm the data and submit the form."
+python main.py "Fill in the opt-out form for marketing mails. Name is Peter, email is p.parker@email.com, I'm receiving too many emails, but I still want to receive security updates. Confirm the data and submit the form."
 ```
 
-### API Usage Example
+### API Usage
 
-[Work in Progress]
+The agent can also be exposed as a REST API. The relevant code can be found in `server.py`, `api/main.py` and `api/routes.py`.
+
+### Starting the server
+Start the FastAPI server using:
+
+```bash
+python server.py
+```
+
+This will serve the API at [http://localhost:8090](http://localhost:8090).
+
+Once the server is running, open [http://localhost:8090/v1/api/docs](http://localhost:8090/v1/api/docs) in the browser to see the Swagger UI.
+
+Try out the synchronous API `/run_agent_sync` with the required fields similar to [Example: Reading data from a webpage](#example-1-reading-data-from-a-webpage) on the swagger UI.
+
+> Note: The API runs synchronously for now i.e. each call will block until the agent finishes. So, other concurrent calls will be blocked until the existing processes finish. Conversion to async playwright is in progress.
