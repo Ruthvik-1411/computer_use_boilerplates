@@ -15,15 +15,10 @@ This folder contains boilerplate code to:
 
 ```bash
 git clone https://github.com/Ruthvik-1411/computer_use_boilerplates.git
-cd computer_use_boilerplates/gemini_computer_use
-```
-2. Setup the environment variables by copying the contents of `env.example` to `.env`. Make sure to add in the required variables as they will be needed.
-
-```bash
-cp env.example .env
+cd computer_use_boilerplates
 ```
 
-3. Install dependencies:
+2. Install dependencies:
 
 You can use either `uv` (recommended for speed) or just `pip` to install dependencies.
 
@@ -41,12 +36,14 @@ source .venv/bin/activate
 # Windows
 .venv\Scripts\activate
 
-# Run the next two commands
 # 3. Sync base dependencies
 uv sync
 
 # 4. Sync the gemini-computer-use dependency group
 uv sync --group gemini-computer-use
+
+# 5. Navigate to gemini_computer_use folder
+cd gemini_computer_use
 
 # (Optional)
 # 3. Install dependencies from requirements.txt incase of issues with uv groups
@@ -63,8 +60,17 @@ source .venv/bin/activate
 # (Windows)
 .venv\Scripts\activate
 
+# 5. Navigate to gemini_computer_use folder
+cd gemini_computer_use
+
 # Install dependencies
 pip install -r requirements.txt
+```
+
+2. Setup the environment variables for `gemini_computer_use` by copying the contents of `env.example` to `.env`. Make sure to add in the required variables as they will be needed.
+
+```bash
+cp env.example .env
 ```
 
 4. Run playwright setup (required once)
