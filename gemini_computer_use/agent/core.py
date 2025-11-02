@@ -1,4 +1,5 @@
 """Main agent orchestration logic"""
+from typing import Optional
 
 from .gemini_client import GeminiComputerUseClient
 from .browser import BrowserManager
@@ -38,11 +39,17 @@ class ComputerUseAgent:
             results.append((fc_name, action_result))
         return results
 
-    def run(self, goal: str, initial_url: str):
+    def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
+        final_response = ""
         try:
             self.browser.start()
-            self.browser.goto(initial_url)
+            if initial_url:
+                logger.info(f"Starting browser with url: {initial_url}")
+                self.browser.goto(initial_url)
+            else:
+                logger.info("No initial URL provided. Opening default search engine.")
+                self.browser.search()
 
             logger.info(f"Agent goal: {goal}")
 
@@ -57,7 +64,7 @@ class ComputerUseAgent:
                 
                 # Generate content
                 response = self.llm.generate_content(contents)
-                
+                # logger.info(f"[RESPONSE] {response.model_dump()}")
                 candidate = response.candidates[0]
                 contents.append(candidate.content)
 
@@ -69,10 +76,10 @@ class ComputerUseAgent:
 
                 # If no function calls, then task complete
                 if not function_calls:
-                    final_text = " ".join(
+                    final_response = " ".join(
                         [p.text for p in candidate.content.parts if p.text]
                     )
-                    logger.info(f"Final Output: {final_text}")
+                    logger.info(f"Final Output: {final_response}")
                     break
                 
                 # Execute actions and send back screenshots
@@ -88,9 +95,15 @@ class ComputerUseAgent:
 
                 # Update state with function responses
                 contents.append(function_response_content)
+            else:
+                # Reached max_turns without reaching a final output
+                logger.warning("Exhausted maximum number of turns. Unable to achieve goal.")
+                final_response = "Goal not completed within the maximum turn limit."
 
         except Exception as e:
             logger.error(f"Agent encountered an error: {e}", exc_info=True)
-            raise
+            final_response = f"Agent terminated due to error: {e}"
         finally:
             self.browser.close()
+        
+        return final_response

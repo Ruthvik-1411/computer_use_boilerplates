@@ -14,8 +14,11 @@ MODEL_NAME = "gemini-2.5-computer-use-preview-10-2025"
 SCREEN_WIDTH = 1440
 SCREEN_HEIGHT = 900
 
+# Default value, expects url from CLI else starts with search engine
+INITIAL_URL = None
+
 # Fill a google form
-INITIAL_URL = "https://forms.gle/HnVvLVSseEvuPaaAA"
+# INITIAL_URL = "https://forms.gle/HnVvLVSseEvuPaaAA"
 
 # Try to solve a captcha
 # INITIAL_URL = "https://2captcha.com/demo/recaptcha-v2"

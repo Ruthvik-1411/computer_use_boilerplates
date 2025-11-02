@@ -17,5 +17,7 @@ members = [
 
 [dependency-groups]
 gemini-computer-use = [
+    "fastapi>=0.120.4",
     "google-genai>=1.47.0",
+    "uvicorn>=0.38.0",
 ]
