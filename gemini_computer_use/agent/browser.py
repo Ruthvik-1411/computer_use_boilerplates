@@ -107,8 +107,9 @@ class BrowserManager:
         self.page.go_forward()
     
     def search(self, **kwargs):
-        """Go to search engine to search"""
+        """Go to search engine to search and start the actions"""
         # We'll default to google search for now
+        # NOTE: sometimes for security reasons, google might ask to solve captcha
         self.page.goto("https://www.google.com/")
     
     def navigate(self, url: str, **kwargs):

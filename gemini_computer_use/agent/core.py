@@ -1,4 +1,5 @@
 """Main agent orchestration logic"""
+from typing import Optional
 
 from .gemini_client import GeminiComputerUseClient
 from .browser import BrowserManager
@@ -38,11 +39,16 @@ class ComputerUseAgent:
             results.append((fc_name, action_result))
         return results
 
-    def run(self, goal: str, initial_url: str):
+    def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
         try:
             self.browser.start()
-            self.browser.goto(initial_url)
+            if initial_url:
+                logger.info(f"Starting browser with url: {initial_url}")
+                self.browser.goto(initial_url)
+            else:
+                logger.info("No initial URL provided. Opening default search engine.")
+                self.browser.search()
 
             logger.info(f"Agent goal: {goal}")
 
@@ -57,7 +63,7 @@ class ComputerUseAgent:
                 
                 # Generate content
                 response = self.llm.generate_content(contents)
-                
+                # logger.info(f"[RESPONSE] {response.model_dump()}")
                 candidate = response.candidates[0]
                 contents.append(candidate.content)
 
