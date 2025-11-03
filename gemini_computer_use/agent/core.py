@@ -2,7 +2,7 @@
 from typing import Optional
 
 from .gemini_client import GeminiComputerUseClient
-from .browser import BrowserManager
+from .browser import BrowserManager, AsyncBrowserManager
 from .utils import get_safety_confirmation
 from .logger import get_logger
 
@@ -105,5 +105,105 @@ class ComputerUseAgent:
             final_response = f"Agent terminated due to error: {e}"
         finally:
             self.browser.close()
+        
+        return final_response
+
+class AsyncComputerUseAgent:
+    """Class for orchestrating the computer use agent asynchronously"""
+
+    def __init__(self,
+                 llm_client: GeminiComputerUseClient,
+                 browser_manager: AsyncBrowserManager,
+                 max_turns: int = 20):
+        self.llm = llm_client
+        self.browser = browser_manager
+        self.max_turns = max_turns
+
+    async def _execute_function_calls(self, function_calls):
+        """Executes the function calls using browser actions"""
+        results = []
+        for fc in function_calls:
+            fc_name = fc.name
+            fc_args = dict(fc.args or {})
+            action_result = {}
+
+            if "safety_decision" in fc_args:
+                decision = get_safety_confirmation(fc_args["safety_decision"])
+                if decision == "TERMINATE":
+                    logger.warning("Terminating agent loop by user request.")
+                    break
+                action_result["safety_acknowledgement"] = "true"
+        
+            result = await self.browser.execute_action(fc_name, fc_args)
+            action_result.update(result)
+            results.append((fc_name, action_result))
+        return results
+
+    async def run(self, goal: str, initial_url: Optional[str] = None):
+        """Runs the main agent loop"""
+        final_response = ""
+        try:
+            await self.browser.start()
+            if initial_url:
+                logger.info(f"Starting browser with url: {initial_url}")
+                await self.browser.goto(initial_url)
+            else:
+                logger.info("No initial URL provided. Opening default search engine.")
+                await self.browser.search()
+
+            logger.info(f"Agent goal: {goal}")
+
+            # Capture initial state
+            initial_image = await self.browser.capture_screen()
+            contents = self.llm.build_initial_message(goal, initial_image)
+            
+            # TODO: Add total execution time.
+            # Run the react loop for max_turns
+            for turn in range(self.max_turns):
+                logger.info(f"===== Turn {turn + 1}/{self.max_turns} =====")
+                
+                # Generate content
+                response = await self.llm.generate_content_async(contents)
+                # logger.info(f"[RESPONSE] {response.model_dump()}")
+                candidate = response.candidates[0]
+                contents.append(candidate.content)
+
+                function_calls = [
+                    p.function_call
+                    for p in candidate.content.parts
+                    if getattr(p, "function_call", None)
+                ]
+
+                # If no function calls, then task complete
+                if not function_calls:
+                    final_response = " ".join(
+                        [p.text for p in candidate.content.parts if p.text]
+                    )
+                    logger.info(f"Final Output: {final_response}")
+                    break
+                
+                # Execute actions and send back screenshots
+                action_results = await self._execute_function_calls(function_calls)
+                screenshot = await self.browser.capture_screen()
+                current_url = await self.browser.get_current_url()
+
+                function_response_content = self.llm.build_function_responses_message(
+                    screenshot=screenshot,
+                    current_url=current_url,
+                    results=action_results
+                )
+
+                # Update state with function responses
+                contents.append(function_response_content)
+            else:
+                # Reached max_turns without reaching a final output
+                logger.warning("Exhausted maximum number of turns. Unable to achieve goal.")
+                final_response = "Goal not completed within the maximum turn limit."
+
+        except Exception as e:
+            logger.error(f"Agent encountered an error: {e}", exc_info=True)
+            final_response = f"Agent terminated due to error: {e}"
+        finally:
+            await self.browser.close()
         
         return final_response

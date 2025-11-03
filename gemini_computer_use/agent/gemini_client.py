@@ -88,6 +88,16 @@ class GeminiComputerUseClient:
         )
 
         return response
+    
+    async def generate_content_async(self, contents: List[types.Content]):
+        """Generate response from llm using aio client"""
+        response = await self.gemini_client.aio.models.generate_content(
+            model=self.model_name,
+            contents=contents,
+            config=self.config
+        )
+
+        return response
 
     # TODO: add type hint for screenshot
     def build_function_responses_message(self,
