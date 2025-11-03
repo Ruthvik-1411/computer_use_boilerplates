@@ -35,7 +35,7 @@ class AgentRunResponse(BaseModel):
     message: str
 
 @router.post("/run_agent_sync", response_model=AgentRunResponse)
-def run_agent(req: AgentRunRequest):
+def run_agent_sync(req: AgentRunRequest):
     """Runs the Gemini Computer Use Agent with the given goal"""
 
     try:
@@ -69,7 +69,7 @@ def run_agent(req: AgentRunRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/run_agent_async", response_model=AgentRunResponse)
-async def run_agent(req: AgentRunRequest):
+async def run_agent_async(req: AgentRunRequest):
     """Runs the Gemini Computer Use Agent with the given goal asynchronously"""
 
     try:
