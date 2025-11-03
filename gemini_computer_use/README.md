@@ -82,19 +82,21 @@ playwright install chromium
 
 ### CLI Usage
 
-The agent can be run using the cli using:
-```bash
-python main.py "Goal"
-# or
-python main.py "Goal" --url "initial_url"
-```
+The `main.py` script is the command-line interface (CLI) for running the computer use agent. The agent can be run both synchronously [`run_agent_sync`](main.py#L14) and asynchronously [`run_agent_async`](main.py#L43).
+
+**CLI Arguments:**
+
+| Argument | Description | Required | Default |
+|-|-|-|-|
+| `--goal` | The goal for the computer use agent to achieve. | Yes | - |
+| `--initial_url` | The initial URL/page to load when the browser starts. | No | https://www.google.com |
 
 #### Example 1: Reading data from a webpage
 
 Pass a URL and a query to the agent to extract or summarize data.
 
 ```bash
-python main.py "What is today's featured article on wikipedia about?" --url "https://en.wikipedia.org/wiki/Main_Page"
+python main.py --goal="What is today's featured article on wikipedia about?" --initial_url "https://en.wikipedia.org/wiki/Main_Page"
 ```
 
 #### Example 2: Automated form filling
@@ -104,12 +106,15 @@ Use the Computer Use agent to fill and submit online forms.
 Make sure the `INITIAL_URL` in `config.py` points to your form (e.g., a Google Form).
 
 ```bash
-python main.py "Fill in the opt-out form for marketing mails. Name is Peter, email is p.parker@email.com, I'm receiving too many emails, but I still want to receive security updates. Confirm the data and submit the form."
+python main.py --goal="Fill in the opt-out form for marketing mails. Name is Peter, email is p.parker@email.com, I'm receiving too many emails, but I still want to receive security updates. Confirm the data and submit the form."
 ```
 
 ### API Usage
 
-The agent can also be exposed as a REST API. The relevant code can be found in `server.py`, `api/main.py` and `api/routes.py`.
+The agent can also be exposed as a REST API. The relevant implementation can be found in:
+- `server.py` – the entry point for starting the API server
+- `api/main.py` – FastAPI application setup
+- `api/routes.py` – endpoint definitions
 
 ### Starting the server
 Start the FastAPI server using:
@@ -118,10 +123,16 @@ Start the FastAPI server using:
 python server.py
 ```
 
-This will serve the API at [http://localhost:8090](http://localhost:8090).
+This will start the server at [http://localhost:8090](http://localhost:8090).
 
-Once the server is running, open [http://localhost:8090/v1/api/docs](http://localhost:8090/v1/api/docs) in the browser to see the Swagger UI.
+Once the server is running, open [http://localhost:8090/v1/api/docs](http://localhost:8090/v1/api/docs) in the browser to see the **Swagger UI** and explore the available endpoints.
 
-Try out the synchronous API `/run_agent_sync` with the required fields similar to [Example: Reading data from a webpage](#example-1-reading-data-from-a-webpage) on the swagger UI.
+### Available Endpoints
 
-> Note: The API runs synchronously for now i.e. each call will block until the agent finishes. So, other concurrent calls will be blocked until the existing processes finish. Conversion to async playwright is in progress.
+- Synchronous Agent:
+    - Try the [`/run_agent_sync`](api/routes.py#L38) on Swagger UI.
+    - Use the prefilled values and `Try it out` or provide values as needed similar to [Example: Reading data from a webpage](#example-1-reading-data-from-a-webpage)
+
+- Asynchronous Agent:
+    - Try the [`/run_agent_async`](api/routes.py#L72) on Swagger UI in a similar way.
+

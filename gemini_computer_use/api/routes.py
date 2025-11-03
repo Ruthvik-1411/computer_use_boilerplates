@@ -1,5 +1,4 @@
 """API routes for Gemini Computer Use Agent"""
-
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -7,9 +6,9 @@ from pydantic import BaseModel
 from pydantic.config import ConfigDict
 
 from agent.config import GEMINI_API_KEY,MODEL_NAME, SCREEN_WIDTH, SCREEN_HEIGHT, MAX_AGENT_TURNS
-from agent.browser import BrowserManager
+from agent.browser import BrowserManager, AsyncBrowserManager
 from agent.gemini_client import GeminiComputerUseClient
-from agent.core import ComputerUseAgent
+from agent.core import ComputerUseAgent, AsyncComputerUseAgent
 from agent.logger import get_logger
 
 logger = get_logger(__name__)
@@ -36,7 +35,7 @@ class AgentRunResponse(BaseModel):
     message: str
 
 @router.post("/run_agent_sync", response_model=AgentRunResponse)
-def run_agent(req: AgentRunRequest):
+def run_agent_sync(req: AgentRunRequest):
     """Runs the Gemini Computer Use Agent with the given goal"""
 
     try:
@@ -61,6 +60,39 @@ def run_agent(req: AgentRunRequest):
         # Run the agent synchronously for now
         # TODO: Propagate errors/exceptions to client, supressing for now inside .run
         result_text = agent.run(goal=req.goal, initial_url=req.url)
+
+        return AgentRunResponse(success=True,
+                                message=result_text or "Agent run completed successfully.")
+
+    except Exception as e:
+        logger.error(f"Agent execution failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/run_agent_async", response_model=AgentRunResponse)
+async def run_agent_async(req: AgentRunRequest):
+    """Runs the Gemini Computer Use Agent with the given goal asynchronously"""
+
+    try:
+        browser = AsyncBrowserManager(
+            page_width=SCREEN_WIDTH,
+            page_height=SCREEN_HEIGHT,
+            # Read this based on env, for containers, read the respective variable
+            headless=True,
+        )
+
+        llm = GeminiComputerUseClient(
+            api_key=GEMINI_API_KEY,
+            model_name=MODEL_NAME,
+        )
+
+        agent = AsyncComputerUseAgent(
+            llm_client=llm,
+            browser_manager=browser,
+            max_turns=req.max_turns,
+        )
+
+        # TODO: Propagate errors/exceptions to client, supressing for now inside .run
+        result_text = await agent.run(goal=req.goal, initial_url=req.url)
 
         return AgentRunResponse(success=True,
                                 message=result_text or "Agent run completed successfully.")
