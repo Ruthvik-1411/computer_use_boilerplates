@@ -82,19 +82,21 @@ playwright install chromium
 
 ### CLI Usage
 
-The agent can be run using the cli using:
-```bash
-python main.py "Goal"
-# or
-python main.py "Goal" --url "initial_url"
-```
+The `main.py` script is the command-line interface (CLI) for running the computer use agent.
+
+**CLI Arguments:**
+
+| Argument | Description | Required | Default |
+|-|-|-|-|
+| `--goal` | The goal for the computer use agent to achieve. | Yes | - |
+| `--initial_url` | The initial URL/page to load when the browser starts. | No | https://www.google.com |
 
 #### Example 1: Reading data from a webpage
 
 Pass a URL and a query to the agent to extract or summarize data.
 
 ```bash
-python main.py "What is today's featured article on wikipedia about?" --url "https://en.wikipedia.org/wiki/Main_Page"
+python main.py --goal="What is today's featured article on wikipedia about?" --initial_url "https://en.wikipedia.org/wiki/Main_Page"
 ```
 
 #### Example 2: Automated form filling
@@ -104,7 +106,7 @@ Use the Computer Use agent to fill and submit online forms.
 Make sure the `INITIAL_URL` in `config.py` points to your form (e.g., a Google Form).
 
 ```bash
-python main.py "Fill in the opt-out form for marketing mails. Name is Peter, email is p.parker@email.com, I'm receiving too many emails, but I still want to receive security updates. Confirm the data and submit the form."
+python main.py --goal="Fill in the opt-out form for marketing mails. Name is Peter, email is p.parker@email.com, I'm receiving too many emails, but I still want to receive security updates. Confirm the data and submit the form."
 ```
 
 ### API Usage
@@ -120,7 +122,7 @@ python server.py
 
 This will serve the API at [http://localhost:8090](http://localhost:8090).
 
-Once the server is running, open [http://localhost:8090/v1/api/docs](http://localhost:8090/v1/api/docs) in the browser to see the Swagger UI.
+Once the server is running, open [http://localhost:8090/v1/api/docs](http://localhost:8090/v1/api/docs) in the browser to see the **Swagger UI**.
 
 Try out the synchronous API `/run_agent_sync` with the required fields similar to [Example: Reading data from a webpage](#example-1-reading-data-from-a-webpage) on the swagger UI.
 

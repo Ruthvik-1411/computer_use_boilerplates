@@ -12,8 +12,8 @@ logger = get_logger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description="Run the Gemini Computer Use Agent.")
-    parser.add_argument("goal", type=str, help="The goal description for the agent.")
-    parser.add_argument("--url", type=str, default=None, help="Initial URL to open (optional)")
+    parser.add_argument("--goal", type=str, help="The goal description for the agent.")
+    parser.add_argument("--initial_url", type=str, default=None, help="Initial URL to open (optional)")
     args = parser.parse_args()
 
     if not args.goal:
@@ -33,7 +33,7 @@ def main():
                                  max_turns=MAX_AGENT_TURNS)
 
         # TODO: Make agent async
-        agent.run(goal=args.goal, initial_url=args.url or INITIAL_URL)
+        agent.run(goal=args.goal, initial_url=args.initial_url or INITIAL_URL)
 
     except Exception as e:
         logger.error(f"Agent terminated due to exception: {e}", exc_info=True)

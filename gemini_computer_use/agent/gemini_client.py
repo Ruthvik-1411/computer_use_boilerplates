@@ -15,8 +15,12 @@ class GeminiComputerUseClient:
         )
         self.model_name = model_name
         self.system_instructions = system_instructions
+        self.excluded_functions = [
+            "drag_and_drop",
+            "open_web_browser"
+        ]
         self._setup_config()
-    
+
     def _setup_config(self):
         """Set up the generation config"""
         if self.system_instructions:
@@ -30,10 +34,17 @@ class GeminiComputerUseClient:
                     computer_use=types.ComputerUse(
                         environment=types.Environment.ENVIRONMENT_BROWSER,
                         # TODO: Hardcoding for now, but should pass in from init
-                        excluded_predefined_functions=["drag_and_drop", "open_web_browser"]
+                        excluded_predefined_functions=self.excluded_functions
                     )
                 )],
-                thinking_config=types.ThinkingConfig(include_thoughts=True),
+                safety_settings=[
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE)
+                ]
             )
         else:
             self.config = types.GenerateContentConfig(
@@ -41,10 +52,17 @@ class GeminiComputerUseClient:
                     computer_use=types.ComputerUse(
                         environment=types.Environment.ENVIRONMENT_BROWSER,
                         # TODO: Hardcoding for now, but should pass in from init
-                        excluded_predefined_functions=["drag_and_drop", "open_web_browser"]
+                        excluded_predefined_functions=self.excluded_functions
                     )
                 )],
-                thinking_config=types.ThinkingConfig(include_thoughts=True),
+                safety_settings=[
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                        threshold=types.HarmBlockThreshold.BLOCK_NONE)
+                ]
             )
 
     # TODO: add type hint for initial_image
