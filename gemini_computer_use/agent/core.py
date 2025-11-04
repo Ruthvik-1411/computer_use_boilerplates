@@ -3,7 +3,7 @@ from typing import Optional
 
 from .gemini_client import GeminiComputerUseClient
 from .browser import BrowserManager, AsyncBrowserManager
-from .utils import get_safety_confirmation
+from .utils import get_safety_confirmation, time_logger
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -39,6 +39,7 @@ class ComputerUseAgent:
             results.append((fc_name, action_result))
         return results
 
+    @time_logger
     def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
         final_response = ""
@@ -139,6 +140,7 @@ class AsyncComputerUseAgent:
             results.append((fc_name, action_result))
         return results
 
+    @time_logger
     async def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
         final_response = ""
@@ -179,7 +181,7 @@ class AsyncComputerUseAgent:
                     final_response = " ".join(
                         [p.text for p in candidate.content.parts if p.text]
                     )
-                    logger.info(f"Final Output: {final_response}")
+                    logger.info(f"[Final Output]: {final_response}")
                     break
                 
                 # Execute actions and send back screenshots

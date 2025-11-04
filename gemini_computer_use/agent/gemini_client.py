@@ -1,18 +1,51 @@
 """Encapsulate LLM (Gemini) interactions."""
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from google.genai import Client, types
+
+from .utils import time_logger
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 class GeminiComputerUseClient:
     """Gemini client class"""
 
     def __init__(self,
-                 api_key: str,
+                 api_key: Optional[str] = None,
+                 vertexai_project: Optional[str] = None,
+                 vertexai_location: Optional[str] = None,
                  model_name: str = "gemini-2.5-computer-use-preview-10-2025",
                  system_instructions: str = ""):
-        # Note: Pass in project id and location if using ADC
-        self.gemini_client = Client(
-            api_key=api_key
-        )
+        """Initializes a Gemini client instance.
+
+        Args:
+            api_key: Gemini API key to use google developer api endpoints.
+            vertexai_project: GCP project ID for Vertex AI usage.
+            vertexai_location: GCP region for Vertex AI usage.
+            model_name: Gemini model name.
+            system_instructions: Optional system instructions.
+        """
+        if api_key:
+            logger.info("Using Gemini with API key.")
+            self.gemini_client = Client(
+                api_key=api_key
+            )
+        elif vertexai_project and vertexai_location:
+            logger.info(
+                f"Using Vertex AI endpoints for project: `{vertexai_project}` "
+                f"in location: `{vertexai_location}`."
+            )
+            self.gemini_client = Client(
+                vertexai=True,
+                project=vertexai_project,
+                location=vertexai_location
+            )
+        else:
+            raise ValueError(
+                "GeminiComputerUseClient requires either `api_key` "
+                "or both `vertexai_project` and `vertexai_location`."
+            )
+        
         self.model_name = model_name
         self.system_instructions = system_instructions
         self.excluded_functions = [
@@ -79,6 +112,7 @@ class GeminiComputerUseClient:
             )
         ]
 
+    @time_logger
     def generate_content(self, contents: List[types.Content]):
         """Generate response from llm"""
         response = self.gemini_client.models.generate_content(
@@ -89,6 +123,7 @@ class GeminiComputerUseClient:
 
         return response
     
+    @time_logger
     async def generate_content_async(self, contents: List[types.Content]):
         """Generate response from llm using aio client"""
         response = await self.gemini_client.aio.models.generate_content(

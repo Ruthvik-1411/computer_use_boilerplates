@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from playwright.sync_api import sync_playwright
 from playwright.async_api import async_playwright
 
-from .utils import denormalize_x, denormalize_y
+from .utils import denormalize_x, denormalize_y, time_logger
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -204,6 +204,7 @@ class BrowserManager:
         # Wait for additional 500ms to settle things
         time.sleep(0.5)
 
+    @time_logger
     def execute_action(self,
                        action_name: str,
                        action_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -420,6 +421,7 @@ class AsyncBrowserManager:
         # Wait for additional 500ms to settle things
         await asyncio.sleep(0.5)
 
+    @time_logger
     async def execute_action(self,
                              action_name: str,
                              action_args: Dict[str, Any]) -> Dict[str, Any]:
