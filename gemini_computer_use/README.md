@@ -67,11 +67,31 @@ cd gemini_computer_use
 pip install -r requirements.txt
 ```
 
-2. Setup the environment variables for `gemini_computer_use` by copying the contents of `env.example` to `.env`. Make sure to add in the required variables as they will be needed.
-
+2. Set up the environment variables for gemini_computer_use by copying the example file and filling in your configuration.
 ```bash
 cp env.example .env
 ```
+Modify the .env file and configure one of the two supported authentication methods below:
+
+**A. Using Gemini API key (Developer access):**
+
+If you’re using a Google AI Studio / Gemini API key, set it like this:
+```bash
+GEMINI_API_KEY="your-google-api-key"
+USE_VERTEXAI=false
+```
+This method uses the developer Gemini API directly and hit's the developer endpoints via the provided API key. No additional GCP setup is required.
+
+**B. Use Vertex AI with Application Default Credentials (ADC):**
+
+If you prefer to use Vertex AI endpoints and have a GCP project configured, enable Vertex AI and specify your project and region:
+```bash
+USE_VERTEXAI=true
+VERTEXAI_PROJECT="gcp-project-id"
+# Note: Change location to "global" as some models might be preview and not GA in other regions
+VERTEXAI_LOCATION="us-central1"
+```
+
 
 4. Run playwright setup (required once)
     

@@ -5,7 +5,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pydantic.config import ConfigDict
 
-from agent.config import GEMINI_API_KEY,MODEL_NAME, SCREEN_WIDTH, SCREEN_HEIGHT, MAX_AGENT_TURNS
+from agent.config import (GEMINI_API_KEY, USE_VERTEXAI, VERTEXAI_PROJECT_ID, VERTEXAI_LOCATION,
+                          MODEL_NAME, SCREEN_WIDTH, SCREEN_HEIGHT, MAX_AGENT_TURNS)
 from agent.browser import BrowserManager, AsyncBrowserManager
 from agent.gemini_client import GeminiComputerUseClient
 from agent.core import ComputerUseAgent, AsyncComputerUseAgent
@@ -46,10 +47,12 @@ def run_agent_sync(req: AgentRunRequest):
             headless=True,
         )
 
-        llm = GeminiComputerUseClient(
-            api_key=GEMINI_API_KEY,
-            model_name=MODEL_NAME,
-        )
+        if not USE_VERTEXAI:
+            llm = GeminiComputerUseClient(api_key=GEMINI_API_KEY,
+                                          model_name=MODEL_NAME)
+        else:
+            llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
+                                          vertexai_location=VERTEXAI_LOCATION)
 
         agent = ComputerUseAgent(
             llm_client=llm,
@@ -80,10 +83,12 @@ async def run_agent_async(req: AgentRunRequest):
             headless=True,
         )
 
-        llm = GeminiComputerUseClient(
-            api_key=GEMINI_API_KEY,
-            model_name=MODEL_NAME,
-        )
+        if not USE_VERTEXAI:
+            llm = GeminiComputerUseClient(api_key=GEMINI_API_KEY,
+                                          model_name=MODEL_NAME)
+        else:
+            llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
+                                          vertexai_location=VERTEXAI_LOCATION)
 
         agent = AsyncComputerUseAgent(
             llm_client=llm,
