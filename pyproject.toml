@@ -21,3 +21,9 @@ gemini-computer-use = [
     "google-genai>=1.47.0",
     "uvicorn>=0.38.0",
 ]
+gemini-standalone = [
+    "fastapi>=0.120.4",
+    "google-genai>=1.47.0",
+    "opencv-python>=4.12.0.88",
+    "uvicorn>=0.38.0",
+]
