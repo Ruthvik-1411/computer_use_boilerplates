@@ -33,7 +33,8 @@ def run_agent_sync():
                                           model_name=MODEL_NAME)
         else:
             llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION)
+                                          vertexai_location=VERTEXAI_LOCATION,
+                                          model_name=MODEL_NAME)
 
         agent = ComputerUseAgent(llm_client=llm,
                                  browser_manager=browser,
@@ -58,19 +59,20 @@ async def run_agent_async():
 
     try:
         browser = AsyncBrowserManager(page_width=SCREEN_WIDTH,
-                                     page_height=SCREEN_HEIGHT,
-                                     headless=False)
+                                      page_height=SCREEN_HEIGHT,
+                                      headless=False)
 
         if not USE_VERTEXAI:
             llm = GeminiComputerUseClient(api_key=GEMINI_API_KEY,
                                           model_name=MODEL_NAME)
         else:
             llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION)
+                                          vertexai_location=VERTEXAI_LOCATION,
+                                          model_name=MODEL_NAME)
 
         agent = AsyncComputerUseAgent(llm_client=llm,
-                                 browser_manager=browser,
-                                 max_turns=MAX_AGENT_TURNS)
+                                      browser_manager=browser,
+                                      max_turns=MAX_AGENT_TURNS)
 
         await agent.run(goal=args.goal, initial_url=args.initial_url or INITIAL_URL)
 

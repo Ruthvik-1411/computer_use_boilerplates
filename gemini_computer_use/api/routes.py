@@ -52,7 +52,8 @@ def run_agent_sync(req: AgentRunRequest):
                                           model_name=MODEL_NAME)
         else:
             llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION)
+                                          vertexai_location=VERTEXAI_LOCATION,
+                                          model_name=MODEL_NAME)
 
         agent = ComputerUseAgent(
             llm_client=llm,
@@ -88,7 +89,8 @@ async def run_agent_async(req: AgentRunRequest):
                                           model_name=MODEL_NAME)
         else:
             llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION)
+                                          vertexai_location=VERTEXAI_LOCATION,
+                                          model_name=MODEL_NAME)
 
         agent = AsyncComputerUseAgent(
             llm_client=llm,

@@ -49,7 +49,7 @@ class GeminiComputerUseClient:
         self.model_name = model_name
         self.system_instructions = system_instructions
         self.excluded_functions = [
-            "drag_and_drop",
+            # "drag_and_drop",
             "open_web_browser"
         ]
         self._setup_config()

@@ -186,13 +186,35 @@ class BrowserManager:
         dy = magnitude if direction.lower() == "down" else -magnitude
         self.page.mouse.wheel(0, dy)
 
-    def drag_and_drop(self, **kwargs):
+    def drag_and_drop(self,
+                      x: int,
+                      y: int,
+                      destination_x: int,
+                      destination_y: int,
+                      **kwargs):
         """
-        Drags an element from a starting coordinate (x, y)
-        and drops it at a destination coordinate.
+        Drags an element from a starting coordinate (x, y) and drops it at
+        a destination coordinate (destination_x, destination_y).
+        All coordinates are based on a 1000x1000 grid.
+
+        Args:
+            x: int (0-999)
+            y: int (0-999)
+            destination_x: int (0-999)
+            destination_y: int (0-999)
         """
-        # Not implementing for now, somewhat complex
-        pass
+        self.page.mouse.move(
+            denormalize_x(x, width=self.width),
+            denormalize_y(y, height=self.height)
+        )
+        self.page.wait_for_load_state(state="networkidle")
+        self.page.mouse.down()
+        self.page.mouse.move(
+            denormalize_x(destination_x),
+            denormalize_y(destination_y)
+        )
+        self.page.wait_for_load_state(state="networkidle")
+        self.page.mouse.up()
 
     def _wait_after_action(self, wait_time_s: int = 5):
         """Wait for page stability after each action"""
@@ -403,13 +425,36 @@ class AsyncBrowserManager:
         dy = magnitude if direction.lower() == "down" else -magnitude
         await self.page.mouse.wheel(0, dy)
 
-    async def drag_and_drop(self, **kwargs):
+    async def drag_and_drop(self, 
+                            x: int,
+                            y: int,
+                            destination_x: int,
+                            destination_y: int,
+                            **kwargs):
         """
-        Drags an element from a starting coordinate (x, y)
-        and drops it at a destination coordinate.
+        Drags an element from a starting coordinate (x, y) and drops it at
+        a destination coordinate (destination_x, destination_y).
+        All coordinates are based on a 1000x1000 grid.
+
+        Args:
+            x: int (0-999)
+            y: int (0-999)
+            destination_x: int (0-999)
+            destination_y: int (0-999)
         """
         # Not implementing for now, somewhat complex
-        pass
+        await self.page.mouse.move(
+            denormalize_x(x, width=self.width),
+            denormalize_y(y, height=self.height)
+        )
+        await self.page.wait_for_load_state(state="networkidle")
+        await self.page.mouse.down()
+        await self.page.mouse.move(
+            denormalize_x(destination_x),
+            denormalize_y(destination_y)
+        )
+        await self.page.wait_for_load_state(state="networkidle")
+        await self.page.mouse.up()
 
     async def _wait_after_action(self, wait_time_s: int = 5):
         """Wait for page stability after each action"""
