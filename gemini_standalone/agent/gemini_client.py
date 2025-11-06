@@ -1,5 +1,5 @@
 """Encapsulate LLM (Gemini) interactions."""
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 from google.genai import Client, types
 
 from .utils import time_logger
@@ -7,15 +7,16 @@ from .logger import get_logger
 
 logger = get_logger(__name__)
 
-class GeminiComputerUseClient:
+class GeminiClient:
     """Gemini client class"""
 
     def __init__(self,
                  api_key: Optional[str] = None,
                  vertexai_project: Optional[str] = None,
                  vertexai_location: Optional[str] = None,
-                 model_name: str = "gemini-2.5-computer-use-preview-10-2025",
-                 system_instructions: str = ""):
+                 model_name: str = "gemini-2.5-flash",
+                 system_instructions: str = "",
+                 tools: List[Callable[..., object]] = None):
         """Initializes a Gemini client instance.
 
         Args:
@@ -48,10 +49,16 @@ class GeminiComputerUseClient:
         
         self.model_name = model_name
         self.system_instructions = system_instructions
-        self.excluded_functions = [
-            # "drag_and_drop",
-            "open_web_browser"
-        ]
+
+        self.tool_definitions = []
+        self.excluded_functions = ["open_web_browser"]
+
+        if tools:
+            for tool in tools:
+                if tool.__name__ in self.excluded_functions:
+                    continue
+                self.tool_definitions.append(tool.tool_metadata())
+
         self._setup_config()
 
     def _setup_config(self):
@@ -63,13 +70,7 @@ class GeminiComputerUseClient:
             )
             self.config = types.GenerateContentConfig(
                 system_instruction=system_instructions_contents,
-                tools=[types.Tool(
-                    computer_use=types.ComputerUse(
-                        environment=types.Environment.ENVIRONMENT_BROWSER,
-                        # TODO: Hardcoding for now, but should pass in from init
-                        excluded_predefined_functions=self.excluded_functions
-                    )
-                )],
+                tools=[types.Tool(function_declarations=self.tool_definitions)],
                 safety_settings=[
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
@@ -81,13 +82,7 @@ class GeminiComputerUseClient:
             )
         else:
             self.config = types.GenerateContentConfig(
-                tools=[types.Tool(
-                    computer_use=types.ComputerUse(
-                        environment=types.Environment.ENVIRONMENT_BROWSER,
-                        # TODO: Hardcoding for now, but should pass in from init
-                        excluded_predefined_functions=self.excluded_functions
-                    )
-                )],
+                tools=[types.Tool(function_declarations=self.tool_definitions)],
                 safety_settings=[
                     types.SafetySetting(
                         category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
@@ -148,22 +143,24 @@ class GeminiComputerUseClient:
                 types.FunctionResponse(
                     name=name,
                     response=response_data,
-                    parts=[
-                        types.FunctionResponsePart(
-                            inline_data=types.FunctionResponseBlob(
-                                # TODO: check mime_type instead of hardcoding here
-                                mime_type="image/png",
-                                data=screenshot
-                            )
-                        )
-                    ]
+                    # BUG: Multimodal function responses are not supported for the model.
+                    # parts=[
+                    #     types.FunctionResponsePart(
+                    #         inline_data=types.FunctionResponseBlob(
+                    #             # TODO: check mime_type instead of hardcoding here
+                    #             mime_type="image/png",
+                    #             data=screenshot
+                    #         )
+                    #     )
+                    # ]
                 )
             )
         
+        # NOTE: Add the screenshot as another part in the `user` response
         return types.Content(
             role="user",
             parts=[
-                types.Part(function_response=function_response)
-                for function_response in function_responses
+                *[types.Part(function_response=fr) for fr in function_responses],
+                types.Part.from_bytes(data=screenshot, mime_type="image/png"),
             ]
         )

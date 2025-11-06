@@ -5,8 +5,9 @@ import asyncio
 
 from agent.config import (GEMINI_API_KEY, USE_VERTEXAI, VERTEXAI_PROJECT_ID, VERTEXAI_LOCATION,
                           MODEL_NAME, INITIAL_URL, SCREEN_WIDTH, SCREEN_HEIGHT, MAX_AGENT_TURNS)
+from agent.system_prompt import SYSTEM_PROMPT
 from agent.browser import BrowserManager, AsyncBrowserManager
-from agent.gemini_client import GeminiComputerUseClient
+from agent.gemini_client import GeminiClient
 from agent.core import ComputerUseAgent, AsyncComputerUseAgent
 from agent.logger import get_logger
 
@@ -27,14 +28,20 @@ def run_agent_sync():
         browser = BrowserManager(page_width=SCREEN_WIDTH,
                                  page_height=SCREEN_HEIGHT,
                                  headless=False)
+        
+        tools_list = browser.actions_map.values()
 
         if not USE_VERTEXAI:
-            llm = GeminiComputerUseClient(api_key=GEMINI_API_KEY,
-                                          model_name=MODEL_NAME)
+            llm = GeminiClient(api_key=GEMINI_API_KEY,
+                               model_name=MODEL_NAME,
+                               system_instructions=SYSTEM_PROMPT,
+                               tools=tools_list)
         else:
-            llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION,
-                                          model_name=MODEL_NAME)
+            llm = GeminiClient(vertexai_project=VERTEXAI_PROJECT_ID,
+                               vertexai_location=VERTEXAI_LOCATION,
+                               model_name=MODEL_NAME,
+                               system_instructions=SYSTEM_PROMPT,
+                               tools=tools_list)
 
         agent = ComputerUseAgent(llm_client=llm,
                                  browser_manager=browser,
@@ -59,16 +66,22 @@ async def run_agent_async():
 
     try:
         browser = AsyncBrowserManager(page_width=SCREEN_WIDTH,
-                                      page_height=SCREEN_HEIGHT,
-                                      headless=False)
+                                     page_height=SCREEN_HEIGHT,
+                                     headless=False)
+        
+        tools_list = browser.actions_map.values()
 
         if not USE_VERTEXAI:
-            llm = GeminiComputerUseClient(api_key=GEMINI_API_KEY,
-                                          model_name=MODEL_NAME)
+            llm = GeminiClient(api_key=GEMINI_API_KEY,
+                               model_name=MODEL_NAME,
+                               system_instructions=SYSTEM_PROMPT,
+                               tools=tools_list)
         else:
-            llm = GeminiComputerUseClient(vertexai_project=VERTEXAI_PROJECT_ID,
-                                          vertexai_location=VERTEXAI_LOCATION,
-                                          model_name=MODEL_NAME)
+            llm = GeminiClient(vertexai_project=VERTEXAI_PROJECT_ID,
+                               vertexai_location=VERTEXAI_LOCATION,
+                               model_name=MODEL_NAME,
+                               system_instructions=SYSTEM_PROMPT,
+                               tools=tools_list)
 
         agent = AsyncComputerUseAgent(llm_client=llm,
                                       browser_manager=browser,
@@ -82,7 +95,7 @@ async def run_agent_async():
 
 if __name__ == "__main__":
     # Run synchronously
-    run_agent_sync()
+    # run_agent_sync()
 
     # Run asynchronously
-    # asyncio.run(run_agent_async())
+    asyncio.run(run_agent_async())
