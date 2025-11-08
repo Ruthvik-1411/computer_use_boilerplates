@@ -210,8 +210,8 @@ class BrowserManager:
         self.page.wait_for_load_state(state="networkidle")
         self.page.mouse.down()
         self.page.mouse.move(
-            denormalize_x(destination_x),
-            denormalize_y(destination_y)
+            denormalize_x(destination_x, width=self.width),
+            denormalize_y(destination_y, height=self.height)
         )
         self.page.wait_for_load_state(state="networkidle")
         self.page.mouse.up()
@@ -223,8 +223,8 @@ class BrowserManager:
                                           timeout=wait_time_s * 1000)
         except Exception:
             pass
-        # Wait for additional 500ms to settle things
-        time.sleep(0.5)
+        # Wait for additional 1s to settle things
+        time.sleep(1)
 
     @time_logger
     def execute_action(self,
@@ -442,18 +442,17 @@ class AsyncBrowserManager:
             destination_x: int (0-999)
             destination_y: int (0-999)
         """
-        # Not implementing for now, somewhat complex
         await self.page.mouse.move(
             denormalize_x(x, width=self.width),
             denormalize_y(y, height=self.height)
         )
-        await self.page.wait_for_load_state(state="networkidle")
+        await self.page.wait_for_load_state()
         await self.page.mouse.down()
         await self.page.mouse.move(
-            denormalize_x(destination_x),
-            denormalize_y(destination_y)
+            denormalize_x(destination_x, width=self.width),
+            denormalize_y(destination_y, height=self.height)
         )
-        await self.page.wait_for_load_state(state="networkidle")
+        await self.page.wait_for_load_state()
         await self.page.mouse.up()
 
     async def _wait_after_action(self, wait_time_s: int = 5):
@@ -463,8 +462,8 @@ class AsyncBrowserManager:
                                                 timeout=wait_time_s * 1000)
         except Exception:
             pass
-        # Wait for additional 500ms to settle things
-        await asyncio.sleep(0.5)
+        # Wait for additional 1s to settle things
+        await asyncio.sleep(1)
 
     @time_logger
     async def execute_action(self,

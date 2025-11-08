@@ -12,6 +12,8 @@ VERTEXAI_LOCATION = os.getenv("VERTEXAI_LOCATION")
 
 MODEL_NAME = "gemini-2.5-computer-use-preview-10-2025"
 
+SAFETY_AUTO_PROCEED = os.getenv("SAFETY_AUTO_PROCEED", "true").lower() == "true"
+
 if not GEMINI_API_KEY and not USE_VERTEXAI:
     raise ValueError("Please set either GEMINI_API_KEY or USE_VERTEXAI=true in .env")
 
