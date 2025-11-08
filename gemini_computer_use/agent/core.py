@@ -1,5 +1,5 @@
 """Main agent orchestration logic"""
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from .gemini_client import GeminiComputerUseClient
 from .browser import BrowserManager, AsyncBrowserManager
@@ -30,7 +30,7 @@ class ComputerUseAgent:
             if "safety_decision" in fc_args:
                 decision = get_safety_confirmation(fc_args["safety_decision"])
                 if decision == "TERMINATE":
-                    logger.warning("Terminating agent loop by user request.")
+                    logger.warning("Terminating agent loop due to safety request.")
                     break
                 action_result["safety_acknowledgement"] = "true"
         
@@ -43,6 +43,10 @@ class ComputerUseAgent:
     def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
         final_response = ""
+        termination_reason = "ERROR"
+        action_history: List[Dict[str, Any]] = []
+        final_screenshot: bytes = b""
+
         try:
             self.browser.start()
             if initial_url:
@@ -57,8 +61,7 @@ class ComputerUseAgent:
             # Capture initial state
             initial_image = self.browser.capture_screen()
             contents = self.llm.build_initial_message(goal, initial_image)
-            
-            # TODO: Add total execution time.
+
             # Run the react loop for max_turns
             for turn in range(self.max_turns):
                 logger.info(f"===== Turn {turn + 1}/{self.max_turns} =====")
@@ -80,11 +83,21 @@ class ComputerUseAgent:
                     final_response = " ".join(
                         [p.text for p in candidate.content.parts if p.text]
                     )
-                    logger.info(f"Final Output: {final_response}")
+                    logger.info(f"[Final Output]: {final_response}")
+                    termination_reason = "COMPLETED"
                     break
                 
                 # Execute actions and send back screenshots
                 action_results = self._execute_function_calls(function_calls)
+
+                for i, fc in enumerate(function_calls):
+                    action_history.append({
+                        "turn": turn + 1,
+                        "action_name": fc.name,
+                        "action_args": dict(fc.args or {}),
+                        "result": action_results[i][1]
+                    })
+
                 screenshot = self.browser.capture_screen()
                 current_url = self.browser.get_current_url()
 
@@ -100,14 +113,24 @@ class ComputerUseAgent:
                 # Reached max_turns without reaching a final output
                 logger.warning("Exhausted maximum number of turns. Unable to achieve goal.")
                 final_response = "Goal not completed within the maximum turn limit."
+                termination_reason = "MAX_TURNS_EXCEEDED"
 
         except Exception as e:
             logger.error(f"Agent encountered an error: {e}", exc_info=True)
             final_response = f"Agent terminated due to error: {e}"
+            termination_reason = "ERROR"
         finally:
+            if self.browser and self.browser.page:
+                final_screenshot = self.browser.capture_screen()
+
             self.browser.close()
         
-        return final_response
+        return {
+            "final_message": final_response,
+            "action_history": action_history,
+            "termination_reason": termination_reason,
+            "final_screenshot_bytes": final_screenshot
+        }
 
 class AsyncComputerUseAgent:
     """Class for orchestrating the computer use agent asynchronously"""
@@ -131,7 +154,7 @@ class AsyncComputerUseAgent:
             if "safety_decision" in fc_args:
                 decision = get_safety_confirmation(fc_args["safety_decision"])
                 if decision == "TERMINATE":
-                    logger.warning("Terminating agent loop by user request.")
+                    logger.warning("Terminating agent loop due to safety request.")
                     break
                 action_result["safety_acknowledgement"] = "true"
         
@@ -144,6 +167,10 @@ class AsyncComputerUseAgent:
     async def run(self, goal: str, initial_url: Optional[str] = None):
         """Runs the main agent loop"""
         final_response = ""
+        termination_reason = "ERROR"
+        action_history: List[Dict[str, Any]] = []
+        final_screenshot: bytes = b""
+
         try:
             await self.browser.start()
             if initial_url:
@@ -158,8 +185,7 @@ class AsyncComputerUseAgent:
             # Capture initial state
             initial_image = await self.browser.capture_screen()
             contents = self.llm.build_initial_message(goal, initial_image)
-            
-            # TODO: Add total execution time.
+
             # Run the react loop for max_turns
             for turn in range(self.max_turns):
                 logger.info(f"===== Turn {turn + 1}/{self.max_turns} =====")
@@ -182,10 +208,20 @@ class AsyncComputerUseAgent:
                         [p.text for p in candidate.content.parts if p.text]
                     )
                     logger.info(f"[Final Output]: {final_response}")
+                    termination_reason = "COMPLETED"
                     break
                 
                 # Execute actions and send back screenshots
                 action_results = await self._execute_function_calls(function_calls)
+
+                for i, fc in enumerate(function_calls):
+                    action_history.append({
+                        "turn": turn + 1,
+                        "action_name": fc.name,
+                        "action_args": dict(fc.args or {}),
+                        "result": action_results[i][1]
+                    })
+
                 screenshot = await self.browser.capture_screen()
                 current_url = await self.browser.get_current_url()
 
@@ -201,11 +237,21 @@ class AsyncComputerUseAgent:
                 # Reached max_turns without reaching a final output
                 logger.warning("Exhausted maximum number of turns. Unable to achieve goal.")
                 final_response = "Goal not completed within the maximum turn limit."
+                termination_reason = "MAX_TURNS_EXCEEDED"
 
         except Exception as e:
             logger.error(f"Agent encountered an error: {e}", exc_info=True)
             final_response = f"Agent terminated due to error: {e}"
+            termination_reason = "ERROR"
         finally:
+            if self.browser and self.browser.page:
+                final_screenshot = await self.browser.capture_screen()
+
             await self.browser.close()
         
-        return final_response
+        return {
+            "final_message": final_response,
+            "action_history": action_history,
+            "termination_reason": termination_reason,
+            "final_screenshot_bytes": final_screenshot
+        }

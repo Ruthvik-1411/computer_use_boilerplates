@@ -3,6 +3,7 @@ import time
 import functools
 import asyncio
 
+from .config import SAFETY_AUTO_PROCEED
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,6 +24,12 @@ def get_safety_confirmation(safety_decision: dict):
     logger.info("Safety service requires explicit confirmation!")
     logger.info(f"Explanation: {safety_decision['explanation']}")
 
+    # For server setup, auto proceed
+    if SAFETY_AUTO_PROCEED:
+        logger.warning("Auto-proceeding due to server configuration.")
+        return "CONTINUE"
+
+    # For CLI usage, it's optional
     decision = ""
     while decision.lower() not in ("y", "n", "ye", "yes", "no"):
         decision = input("Do you wish to proceed? [Y]es/[N]o\n")
